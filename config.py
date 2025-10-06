@@ -44,24 +44,36 @@ class ConfigManager:
         self.config = self._load_config()
 
     def _load_config(self) -> AppConfig:
-        """Load configuration from environment variables."""
+        """Load and validate application configuration from environment variables.
 
-        # BigQuery configuration
+        This method handles the complete configuration loading process including:
+        - BigQuery service configuration (project ID, dataset selection)
+        - Google Gemini AI model configuration (model selection, API credentials)
+        - Environment variable validation and defaults
+        - Required credential verification
+
+        Returns:
+            AppConfig: Complete application configuration object with validated settings.
+
+        Raises:
+            ValueError: If required configuration values are missing or invalid.
+        """
+        # BigQuery configuration with environment variable fallbacks
         bq_config = BigQueryConfig(
             project_id=os.getenv("GOOGLE_CLOUD_PROJECT"),
             dataset_id=os.getenv("BQ_DATASET_ID", "bigquery-public-data.thelook_ecommerce")
         )
 
-        # Gemini configuration
+        # Gemini AI configuration with model and performance tuning
         gemini_config = GeminiConfig(
-            model=os.getenv("GOOGLE_MODEL", "gemini-1.5-pro"),
+            model=os.getenv("GOOGLE_MODEL", "gemini-2.5-pro"),
             temperature=float(os.getenv("TEMPERATURE", "0.1")),
             api_key=os.getenv("GOOGLE_API_KEY")
         )
 
-        # Validate required configurations
+        # Validate required configurations - fail fast if critical dependencies missing
         if not gemini_config.api_key:
-            raise ValueError("Google Gemini API key is required")
+            raise ValueError("Google Gemini API key is required. Set GOOGLE_API_KEY environment variable.")
 
         return AppConfig(
             bq_config=bq_config,
@@ -97,23 +109,49 @@ def get_config() -> AppConfig:
     return _config_manager.get_config()
 
 def setup_gemini():
-    """Set up and return the Google Gemini LLM instance."""
+    """Set up and return the Google Gemini LLM instance with comprehensive error handling.
+
+    This function handles the complete LLM initialization process:
+    1. Validates API key availability from configuration
+    2. Initializes the LangChain Google Generative AI client
+    3. Configures model parameters (temperature, max tokens, API key)
+    4. Provides graceful fallback if initialization fails
+
+    The function follows a "fail-safe" approach - if LLM initialization fails,
+    the application continues with core functionality but without AI enhancement.
+
+    Returns:
+        ChatGoogleGenerativeAI or None: Configured Gemini client if successful,
+        None if API key missing or initialization fails.
+
+    Note:
+        Model testing is deferred to the enhancement phase to avoid blocking
+        startup on temporary API issues.
+    """
     config = get_config()
 
-    # Check if API key is available
+    # Validate API key availability - critical for LLM functionality
     if not config.gemini_config.api_key:
         logging.warning("Google Gemini API key not found. LLM enhancement will be disabled.")
         return None
 
     try:
         from langchain_google_genai import ChatGoogleGenerativeAI
-        # Create client but don't test it yet - we'll handle errors in the enhancement step
-        return ChatGoogleGenerativeAI(
+
+        # Initialize Gemini client with production-ready configuration
+        gemini_client = ChatGoogleGenerativeAI(
             model=config.gemini_config.model,
             temperature=config.gemini_config.temperature,
             max_tokens=config.gemini_config.max_tokens,
             google_api_key=config.gemini_config.api_key
         )
+
+        logging.debug(f"Successfully initialized Gemini client with model: {config.gemini_config.model}")
+        return gemini_client
+
+    except ImportError as e:
+        logging.warning(f"LangChain Google Generative AI package not available: {e}. LLM enhancement disabled.")
+        return None
     except Exception as e:
         logging.warning(f"Failed to initialize Google Gemini client: {e}. LLM enhancement will be disabled.")
         return None

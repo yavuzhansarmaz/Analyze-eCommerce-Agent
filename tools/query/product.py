@@ -38,9 +38,9 @@ class ProductQueryBuilder:
             END as margin_percentage,
 
             -- Time-based metrics (last 90 days)
-            COUNT(CASE WHEN o.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)
+            COUNT(CASE WHEN DATE(o.created_at) >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)
                       THEN oi.order_id END) as recent_orders,
-            COUNT(CASE WHEN o.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)
+            COUNT(CASE WHEN DATE(o.created_at) >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)
                       THEN oi.id END) as recent_quantity
 
         FROM `bigquery-public-data.thelook_ecommerce.products` p
@@ -83,9 +83,9 @@ class ProductQueryBuilder:
             start_date = context.time_range.get('start')
             end_date = context.time_range.get('end')
             if start_date:
-                base_query += f" AND a.created_at >= '{start_date}'"
+                base_query += f" AND DATE(a.created_at) >= '{start_date}'"
             if end_date:
-                base_query += f" AND a.created_at <= '{end_date}'"
+                base_query += f" AND DATE(a.created_at) <= '{end_date}'"
 
         base_query += """
             GROUP BY a.product_id, b.product_id
@@ -103,9 +103,9 @@ class ProductQueryBuilder:
             start_date = context.time_range.get('start')
             end_date = context.time_range.get('end')
             if start_date:
-                base_query += f" WHERE created_at >= '{start_date}'"
+                base_query += f" WHERE DATE(created_at) >= '{start_date}'"
             if end_date:
-                base_query += f" AND created_at <= '{end_date}'"
+                base_query += f" AND DATE(created_at) <= '{end_date}'"
 
         base_query += """
             GROUP BY product_id
