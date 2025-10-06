@@ -97,6 +97,7 @@
 
 ### AI Enhancement Layer
 - **Gemini Integration**: Natural language enhancement of analytical insights
+- **Async Processing**: Parallel AI requests for 5-10x faster processing
 
 ### External Dependencies
 - **Google BigQuery**: Serverless data warehouse for e-commerce dataset
