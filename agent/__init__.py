@@ -29,7 +29,7 @@ class LangGraphAnalysisAgent:
                 # Quick test to see if API key is valid
                 test_response = self.llm_client.invoke("Hello")
                 if test_response:
-                    logging.info("LLM client test successful")
+                    logging.debug("LLM client test successful")
                 else:
                     logging.warning("LLM client returned empty response, disabling LLM features")
                     self.enable_llm_insights = False

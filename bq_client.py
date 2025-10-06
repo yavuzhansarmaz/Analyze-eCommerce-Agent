@@ -17,7 +17,7 @@ class BigQueryRunner:
             project_id: Google Cloud project ID. If None, uses default credentials.
             dataset_id: BigQuery dataset ID. If None, uses default dataset.
         """
-        logging.info("Initializing BigQuery client")
+        logging.debug("Initializing BigQuery client")
         try:
             # Check for service account credentials first
             credentials_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
@@ -25,7 +25,7 @@ class BigQueryRunner:
 
             # Try service account file if it exists (for local development)
             if os.path.exists(service_account_file):
-                logging.info(f"Using service account credentials from: {service_account_file}")
+                logging.debug(f"Using service account credentials from: {service_account_file}")
                 credentials = service_account.Credentials.from_service_account_file(
                     service_account_file,
                     scopes=['https://www.googleapis.com/auth/cloud-platform']
@@ -35,7 +35,7 @@ class BigQueryRunner:
                     credentials=credentials
                 )
             elif credentials_path and os.path.exists(credentials_path):
-                logging.info(f"Using service account credentials from: {credentials_path}")
+                logging.debug(f"Using service account credentials from: {credentials_path}")
                 credentials = service_account.Credentials.from_service_account_file(
                     credentials_path,
                     scopes=['https://www.googleapis.com/auth/cloud-platform']
@@ -46,7 +46,7 @@ class BigQueryRunner:
                 )
             else:
                 # Try to use Application Default Credentials (ADC)
-                logging.info("Attempting to use Application Default Credentials")
+                logging.debug("Attempting to use Application Default Credentials")
                 try:
                     self.client = bigquery.Client(project=project_id)
                 except DefaultCredentialsError:
@@ -54,7 +54,7 @@ class BigQueryRunner:
                     raise ValueError("BigQuery credentials not configured. Set GOOGLE_APPLICATION_CREDENTIALS environment variable or run in GCP.")
 
             self.dataset_id = dataset_id
-            logging.info(f"BigQuery client initialized for dataset: {self.dataset_id}")
+            logging.info(f"BigQuery client ready for dataset: {self.dataset_id}")
         except Exception as e:
             logging.error(f"Failed to initialize BigQuery client: {str(e)}")
             raise
@@ -72,7 +72,7 @@ class BigQueryRunner:
             Exception: If query execution fails.
         """
         try:
-            logging.info(f"Executing BigQuery query")
+            logging.debug(f"Executing BigQuery query")
             query_job = self.client.query(sql_query)
             df = query_job.result().to_dataframe()
             logging.info(f"Query completed successfully, returned {len(df)} rows")
@@ -101,7 +101,7 @@ class BigQueryRunner:
                     "mode": field.mode,
                     "description": field.description or ""
                 })
-            logging.info(f"Retrieved schema for table {table_name}")
+            logging.debug(f"Retrieved schema for table {table_name}")
             return schema_info
         except Exception as e:
             logging.error(f"Failed to get schema for table {table_name}: {str(e)}")

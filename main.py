@@ -6,6 +6,7 @@ Simple CLI for the Data Analysis Agent.
 import sys
 import os
 import logging
+import time
 
 # Add current directory to path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -22,6 +23,7 @@ class SimpleCLI:
 
     def __init__(self):
         self.agent = None
+        self.session_start_time = time.time()
         self._initialize_agent()
 
     def _initialize_agent(self):
@@ -29,7 +31,7 @@ class SimpleCLI:
         try:
             logger.info("Initializing Data Analysis Agent...")
             self.agent = create_analysis_agent()
-            logger.info("Agent initialized successfully")
+            logger.info("Agent ready")
         except Exception as e:
             logger.error(f"Failed to initialize agent: {e}")
             print(f"❌ Agent Initialization Error: {e}")
@@ -61,7 +63,9 @@ class SimpleCLI:
                     continue
 
                 if user_input.lower() in ['quit', 'exit', 'bye']:
+                    session_time = time.time() - self.session_start_time
                     print("👋 Goodbye!")
+                    print(f"⏱️  Session duration: {session_time:.1f} seconds")
                     break
 
                 if user_input.lower() in ['help', '?']:
@@ -71,6 +75,7 @@ class SimpleCLI:
                 # Process the request
                 print(f"🔍 Analyzing: '{user_input}'")
                 print("⏳ Processing...")
+                start_time = time.time()
 
                 result_state = self.agent.analyze(user_input)
 
@@ -88,15 +93,20 @@ class SimpleCLI:
                     for error in errors:
                         print(f"  • {error}")
 
-                print()
+                # Show processing time
+                end_time = time.time()
+                processing_time = end_time - start_time
+                print(f"\n⏱️  Processing completed in {processing_time:.2f} seconds")
 
             except KeyboardInterrupt:
                 print("\n👋 Goodbye!")
+                print("💡 Tip: Type 'quit', 'exit', or 'bye' to exit anytime.")
                 break
             except Exception as e:
                 logger.error(f"Error processing request: {e}")
                 print(f"❌ Error: {e}")
                 print("Please try again.")
+                print("💡 Tip: Type 'quit' to exit.")
 
     def _show_help(self):
         """Show help information."""
@@ -109,6 +119,10 @@ class SimpleCLI:
         print("• 'geographic sales patterns'")
         print("• 'customer behavior analysis'")
         print()
+        print("Features:")
+        print("• ⏱️  Shows processing time for each analysis")
+        print("• ⏱️  Shows total session time when exiting")
+        print()
         print("Type 'quit' to exit.")
         print()
 
@@ -117,7 +131,7 @@ def main():
     # Check configuration first
     try:
         config = get_config()
-        logger.info("Configuration loaded successfully")
+        logger.debug("Configuration loaded successfully")
     except Exception as e:
         logger.error(f"Configuration error: {e}")
         print(f"❌ Configuration Error: {e}")
