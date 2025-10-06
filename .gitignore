@@ -1,0 +1,95 @@
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+.envrc
+
+# Google Cloud Service Account files (contains sensitive credentials)
+*.json
+gen-lang-client-*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache/
+.pytest_cache/
+.hypothesis
+
+# Jupyter Notebook (useful for data analysis)
+.ipynb_checkpoints/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Data files and outputs (useful for data analysis projects)
+*.csv
+*.xlsx
+*.parquet
+*.pkl
+*.pickle
+*.db
+*.sqlite
+*.sqlite3
+data/
+datasets/
+outputs/
+results/
+
+# Logs
+*.log
+logs/
+agent.log
+*.log.*
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+docs/
+
+# Configuration files that may contain secrets
+config.local.json
+config.local.yaml
+config.local.yml

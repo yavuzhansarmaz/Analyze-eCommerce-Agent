@@ -1,0 +1,20 @@
+# Data Analysis Agent - Environment Configuration
+
+# Logging Configuration
+LOG_LEVEL=INFO
+
+# BigQuery Configuration
+GOOGLE_CLOUD_PROJECT=your-gcp-project-id
+BQ_DATASET_ID=bigquery-public-data.thelook_ecommerce
+
+# Google Gemini Configuration (Required)
+GOOGLE_MODEL=gemini-1.5-pro
+TEMPERATURE=0.1
+GOOGLE_API_KEY=your-google-ai-studio-api-key
+GOOGLE_APPLICATION_CREDENTIALS=path/to/your/service-account-key.json
+
+# Instructions:
+# 1. Copy this file to .env
+# 2. Fill in your actual API keys and configuration values
+# 3. Get Google Gemini API key from: https://makersuite.google.com/app/apikey
+# 4. Ensure your GCP project has access to public datasets
