@@ -35,7 +35,7 @@ class AppConfig:
     """Main application configuration."""
     bq_config: BigQueryConfig
     gemini_config: GeminiConfig
-    log_level: str = "INFO"
+    log_level: str = "WARNING"
 
 class ConfigManager:
     """Manages application configuration from environment variables."""

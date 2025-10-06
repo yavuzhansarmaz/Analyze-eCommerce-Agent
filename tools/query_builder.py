@@ -46,7 +46,7 @@ class QueryBuilder:
             try:
                 schema = self.bq_client.get_table_schema(table)
                 self.table_schemas[table] = schema
-                logger.info(f"Loaded schema for table: {table}")
+                logger.debug(f"Loaded schema for table: {table}")
             except Exception as e:
                 logger.error(f"Failed to load schema for table {table}: {e}")
                 raise

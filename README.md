@@ -101,7 +101,8 @@ GOOGLE_CLOUD_PROJECT=your-project-id
 
 - **BigQuery**: 1TB/month free tier
 - **Gemini API**: Pay-per-use with free quota
-- **Efficient**: Optimized queries and caching
+- **High Performance**: Async AI enhancement for 2.45x faster processing (93s → 38s for 3 insights)
+- **Efficient**: Optimized queries and parallel processing
 
 ## 📚 Documentation
 

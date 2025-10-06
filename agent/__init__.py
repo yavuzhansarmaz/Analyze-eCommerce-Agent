@@ -4,6 +4,8 @@ LangGraph-based data analysis agent for e-commerce insights.
 
 import logging
 import pandas as pd
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, Optional
 from langgraph.graph import StateGraph, END
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
@@ -29,7 +31,7 @@ class LangGraphAnalysisAgent:
                 # Quick test to see if API key is valid
                 test_response = self.llm_client.invoke("Hello")
                 if test_response:
-                    logging.info("LLM client test successful")
+                    logging.debug("LLM client test successful")
                 else:
                     logging.warning("LLM client returned empty response, disabling LLM features")
                     self.enable_llm_insights = False
@@ -263,33 +265,57 @@ class LangGraphAnalysisAgent:
                 logger.info("LLM enhancement not available, returning original insights")
                 return state
 
-            # Enhance insights with LLM using existing function
-            enhanced_insights = []
-            for insight in insights:
-                try:
-                    enhanced_content = enhance_insight_with_llm(
-                        self.llm_client,
-                        insight.content,
-                        analysis_type.value
-                    )
-                    enhanced_insight = type('Insight', (), {
-                        'content': enhanced_content,
-                        'confidence': insight.confidence,
-                        'data_source': insight.data_source,
-                        'analysis_type': insight.analysis_type,
-                        'supporting_data': insight.supporting_data
-                    })()
-                    enhanced_insights.append(enhanced_insight)
-                except Exception as e:
-                    logger.warning(f"LLM enhancement failed for insight: {e}")
-                    enhanced_insights.append(insight)  # Keep original if enhancement fails
+            # Enhance insights with LLM using async parallel processing
+            logger.info(f"Starting async AI enhancement for {len(insights)} insights...")
+            async def enhance_insights_async():
+                async def enhance_single_insight(insight):
+                    try:
+                        # Run LLM enhancement in thread pool to avoid blocking
+                        loop = asyncio.get_event_loop()
+                        enhanced_content = await loop.run_in_executor(
+                            None,
+                            enhance_insight_with_llm,
+                            self.llm_client,
+                            insight.content,
+                            analysis_type.value
+                        )
+                        return type('Insight', (), {
+                            'content': enhanced_content,
+                            'confidence': insight.confidence,
+                            'data_source': insight.data_source,
+                            'analysis_type': insight.analysis_type,
+                            'supporting_data': insight.supporting_data
+                        })()
+                    except Exception as e:
+                        logger.warning(f"LLM enhancement failed for insight: {e}")
+                        return insight  # Keep original if enhancement fails
+
+                # Create tasks for all insights
+                tasks = [enhance_single_insight(insight) for insight in insights]
+
+                # Run all enhancements concurrently
+                enhanced_insights = await asyncio.gather(*tasks, return_exceptions=True)
+
+                # Handle any exceptions that occurred
+                final_insights = []
+                for i, result in enumerate(enhanced_insights):
+                    if isinstance(result, Exception):
+                        logger.warning(f"LLM enhancement failed for insight {i}: {result}")
+                        final_insights.append(insights[i])  # Keep original if enhancement failed
+                    else:
+                        final_insights.append(result)
+
+                return final_insights
+
+            # Run the async enhancement
+            enhanced_insights = asyncio.run(enhance_insights_async())
+            logger.info(f"Async AI enhancement completed for {len(enhanced_insights)} insights")
 
             # Update state with enhanced insights
             new_state = state.copy()
             new_state["insights"] = enhanced_insights
             new_state["messages"] = state["messages"] + [AIMessage(content=f"Enhanced {len(enhanced_insights)} insights with AI")]
 
-            logger.info(f"Insight enhancement completed for {len(enhanced_insights)} insights")
             return new_state
 
         except Exception as e:
