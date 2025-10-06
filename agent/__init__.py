@@ -52,12 +52,18 @@ class LangGraphAnalysisAgent:
         # Build the LangGraph workflow
         self.graph = self._create_analysis_graph()
 
-    def analyze(self, user_input: str) -> AnalysisState:
-        """Execute the LangGraph workflow for data analysis."""
+    def _create_initial_state(self, user_input: str) -> AnalysisState:
+        """Create initial analysis state with proper configuration.
 
-        # Create initial state with LangGraph message
+        Args:
+            user_input: The user's natural language query.
+
+        Returns:
+            AnalysisState: Properly initialized state object ready for workflow execution.
+        """
         import uuid
-        initial_state = AnalysisState(
+
+        return AnalysisState(
             messages=[HumanMessage(content=user_input)],
             session_id=str(uuid.uuid4()),
             current_analysis=None,
@@ -73,6 +79,18 @@ class LangGraphAnalysisAgent:
             enable_llm_insights=self.enable_llm_insights
         )
 
+    def analyze(self, user_input: str) -> AnalysisState:
+        """Execute the LangGraph workflow for data analysis.
+
+        Args:
+            user_input: The user's natural language query for analysis.
+
+        Returns:
+            AnalysisState: Final state containing results and insights.
+        """
+        # Create initial state using factory method
+        initial_state = self._create_initial_state(user_input)
+
         # Execute the LangGraph workflow
         try:
             final_state = self.graph.invoke(initial_state)
@@ -86,19 +104,38 @@ class LangGraphAnalysisAgent:
             return error_state
 
     def _create_analysis_graph(self) -> StateGraph:
-        """Create the LangGraph workflow for data analysis."""
+        """Create the complete LangGraph workflow for data analysis pipeline.
 
-        # Create the workflow graph
+        This method constructs a directed graph workflow that orchestrates the entire
+        data analysis process through five sequential nodes:
+
+        1. Query Classification: Determines analysis intent from natural language
+        2. Query Building: Constructs appropriate SQL queries based on analysis type
+        3. Query Execution: Runs queries against BigQuery and handles results
+        4. Data Analysis: Applies business logic and generates insights
+        5. Insight Enhancement: Uses AI to improve and contextualize insights
+
+        The workflow includes comprehensive error handling and state management
+        throughout the entire pipeline.
+
+        Returns:
+            StateGraph: Compiled LangGraph workflow ready for execution.
+
+        Note:
+            The workflow is designed to be resilient - individual node failures
+            are caught and logged while preserving partial results where possible.
+        """
+        # Initialize the workflow graph with our state type
         workflow = StateGraph(AnalysisState)
 
-        # Add nodes for each step of the workflow
+        # Register all workflow nodes (each handles a specific analysis phase)
         workflow.add_node("classify_query", self._classify_query_node)
         workflow.add_node("build_query", self._build_query_node)
         workflow.add_node("execute_query", self._execute_query_node)
         workflow.add_node("analyze_data", self._analyze_data_node)
         workflow.add_node("enhance_insights", self._enhance_insights_node)
 
-        # Define the workflow flow
+        # Define the sequential workflow execution flow
         workflow.set_entry_point("classify_query")
         workflow.add_edge("classify_query", "build_query")
         workflow.add_edge("build_query", "execute_query")
@@ -106,6 +143,7 @@ class LangGraphAnalysisAgent:
         workflow.add_edge("analyze_data", "enhance_insights")
         workflow.add_edge("enhance_insights", END)
 
+        # Compile and return the complete workflow
         return workflow.compile()
 
     def _classify_query_node(self, state: AnalysisState) -> AnalysisState:

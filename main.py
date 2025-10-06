@@ -19,19 +19,27 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class SimpleCLI:
-    """Simple command-line interface."""
+    """Simple command-line interface for the Data Analysis Agent."""
 
-    def __init__(self):
-        self.agent = None
+    def __init__(self, agent=None):
+        """Initialize the CLI interface.
+
+        Args:
+            agent: Pre-initialized analysis agent. If None, will be created automatically.
+        """
+        self.agent = agent
         self.session_start_time = time.time()
-        self._initialize_agent()
 
-    def _initialize_agent(self):
-        """Initialize the analysis agent."""
+        if self.agent is None:
+            self.agent = self._create_analysis_agent()
+
+    def _create_analysis_agent(self):
+        """Create and initialize the analysis agent with proper error handling."""
         try:
             logger.info("Initializing Data Analysis Agent...")
-            self.agent = create_analysis_agent()
+            agent = create_analysis_agent()
             logger.info("Agent ready")
+            return agent
         except Exception as e:
             logger.error(f"Failed to initialize agent: {e}")
             print(f"❌ Agent Initialization Error: {e}")
